@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SolicitudCompraController;
 use App\Http\Controllers\SolicitudServicioController;
@@ -31,5 +32,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::patch('/solicitudes-servicio/{id}/cancelar', [SolicitudServicioController::class, 'cancelar'])
         ->name('solicitudes-servicio.cancelar');
+
+    Route::get('/perfil', [PerfilController::class, 'edit'])->name('perfil.edit');
+
+    Route::patch('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
 });
 

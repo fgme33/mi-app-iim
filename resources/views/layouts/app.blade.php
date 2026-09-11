@@ -77,7 +77,7 @@
 
                         <!-- Mi Perfil -->
                         <li class="nav-item">
-                                <a class="nav-link text-dark fw-semibold me-2" href="#">
+                                <a class="nav-link text-dark fw-semibold me-2" href="{{ route('perfil.edit') }}">
 				<i class="bi bi-person-circle me-1"></i> Mi perfil
                             </a>
                         </li>
