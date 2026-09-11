@@ -79,4 +79,24 @@ class SolicitudCompraController extends Controller
         'message' => 'Estado actualizado correctamente'
     ]);
 }
+
+	public function cancelar(Request $request, $id)
+{
+    $solicitud = SolicitudCompra::findOrFail($id); // O SolicitudCompra según corresponda
+
+    // Opcional: Validar que pertenezca al usuario autenticado y esté pendiente
+    if ($solicitud->user_id !== Auth::id() && !Auth::user()->isAdmin()) {
+        abort(403, 'No autorizado.');
+    }
+
+    if ($solicitud->estado !== 'pendiente') {
+        return back()->with('error', 'Solo se pueden cancelar solicitudes pendientes.');
+    }
+
+    $solicitud->update([
+        'estado' => 'cancelado'
+    ]);
+
+    return back()->with('success', 'Solicitud cancelada correctamente.');
+}
 }

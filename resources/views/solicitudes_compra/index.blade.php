@@ -24,7 +24,8 @@
                             <th>Email Notificación</th>
                             <th>Fecha</th>
                             <th>Estado</th>
-			    <th>Adjunto</th>
+                            <th>Adjunto</th>
+                            <th class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -34,37 +35,47 @@
                                 <td>{{ $solicitud->usuario->name ?? 'N/A' }}</td>
                                 <td>{{ $solicitud->articulo_solicitado }}</td>
                                 <td>{{ $solicitud->email_notificacion }}</td>
-				<td>{{ $solicitud->created_at->format('d/m/Y H:i') }}</td>
-				<td>
-    <select class="form-select form-select-sm cambiar-estado 
-        {{ $solicitud->estado == 'completado' ? 'bg-success text-white' : '' }}
-        {{ $solicitud->estado == 'en_proceso' ? 'bg-warning text-dark' : '' }}
-        {{ $solicitud->estado == 'cancelado' ? 'bg-danger text-white' : '' }}
-        {{ $solicitud->estado == 'pendiente' ? 'bg-secondary text-white' : '' }}" 
-        data-id="{{ $solicitud->id }}" 
-        style="width: 140px; font-weight: 500;">
-        
-        <option value="pendiente" {{ $solicitud->estado == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-        <option value="en_proceso" {{ $solicitud->estado == 'en_proceso' ? 'selected' : '' }}>En Proceso</option>
-        <option value="completado" {{ $solicitud->estado == 'completado' ? 'selected' : '' }}>Completado</option>
-        <option value="cancelado" {{ $solicitud->estado == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
-    </select>
-</td>
-				<td>
-				@if($solicitud->archivo)
-			        <a href="{{ asset('storage/' . $solicitud->archivo) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-			            <i class="bi bi-paperclip"></i> Ver archivo
-			        </a>
-				    @else
-			        <span class="text-muted small">Sin archivo</span>
-				    @endif
-				</td>
+                                <td>{{ $solicitud->created_at->format('d/m/Y H:i') }}</td>
+                                <td>
+                                    {{-- Estado estático con Insignias (Badges) --}}
+                                    @if($solicitud->estado == 'pendiente')
+                                        <span class="badge bg-secondary text-white px-3 py-2">Pendiente</span>
+                                    @elseif($solicitud->estado == 'en_proceso')
+                                        <span class="badge bg-warning text-dark px-3 py-2">En Proceso</span>
+                                    @elseif($solicitud->estado == 'completado')
+                                        <span class="badge bg-success text-white px-3 py-2">Completado</span>
+                                    @else
+                                        <span class="badge bg-danger text-white px-3 py-2">Cancelado</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($solicitud->archivo)
+                                        <a href="{{ asset('storage/' . $solicitud->archivo) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-paperclip"></i> Ver archivo
+                                        </a>
+                                    @else
+                                        <span class="text-muted small">Sin archivo</span>
+                                    @endif
+                                </td>
+                                <td class="text-end">
+                                    {{-- Botón de cancelar solo si el estado es pendiente --}}
+                                    @if($solicitud->estado == 'pendiente')
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmarCancelacion({{ $solicitud->id }})">
+                                            <i class="bi bi-x-circle me-1"></i> Cancelar
+                                        </button>
+
+                                        <form id="cancel-form-{{ $solicitud->id }}" action="{{ route('solicitudes-compra.cancelar', $solicitud->id) }}" method="POST" class="d-none">
+                                            @csrf
+                                            @method('PATCH')
+                                        </form>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">
+                                <td colspan="8" class="text-center py-4 text-muted">
                                     No hay solicitudes de compra registradas.
-                                </td>
+                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -77,39 +88,22 @@
 
 @push('scripts')
 <script>
-document.addEventListener('change', function(e) {
-    if (e.target && e.target.classList.contains('cambiar-estado')) {
-        const select = e.target;
-        const id = select.dataset.id;
-        const nuevoEstado = select.value;
-
-        fetch(`/mi-app/solicitudes-compra/${id}/estado`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ estado: nuevoEstado })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                
-                select.className = 'form-select form-select-sm cambiar-estado ' + (
-                    nuevoEstado === 'completado' ? 'bg-success text-white' :
-                    nuevoEstado === 'en_proceso' ? 'bg-warning text-dark' :
-                    nuevoEstado === 'cancelado' ? 'bg-danger text-white' : 'bg-secondary text-white'
-                );
-            } else {
-                alert('No se pudo actualizar el estado.');
+    function confirmarCancelacion(id) {
+        Swal.fire({
+            title: '¿Cancelar solicitud?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar pedido',
+            cancelButtonText: 'Volver',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(`cancel-form-${id}`).submit();
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Ocurrió un error al actualizar.');
         });
     }
-});
 </script>
 @endpush

@@ -79,4 +79,23 @@ class SolicitudServicioController extends Controller
         'message' => 'Estado actualizado correctamente'
     ]);
 }
+	public function cancelar(Request $request, $id)
+{
+    $solicitud = SolicitudServicio::findOrFail($id); // Cambiar a SolicitudCompra si es en ese controlador
+
+    // Validar que pertenezca al usuario autenticado o sea administrador
+    if ($solicitud->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
+        abort(403, 'No autorizado.');
+    }
+
+    if ($solicitud->estado !== 'pendiente') {
+        return back()->with('error', 'Solo se pueden cancelar solicitudes pendientes.');
+    }
+
+    $solicitud->update([
+        'estado' => 'cancelado'
+    ]);
+
+    return back()->with('success', 'Solicitud cancelada correctamente.');
+}
 }

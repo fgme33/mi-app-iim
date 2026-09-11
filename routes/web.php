@@ -26,5 +26,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::patch('/solicitudes-compra/{id}/estado', [SolicitudCompraController::class, 'updateStatus'])->name('solicitudes.update-status');
 
+    Route::patch('/solicitudes-compra/{id}/cancelar', [SolicitudCompraController::class, 'cancelar'])
+        ->name('solicitudes-compra.cancelar');
+
+    Route::patch('/solicitudes-servicio/{id}/cancelar', [SolicitudServicioController::class, 'cancelar'])
+        ->name('solicitudes-servicio.cancelar');
 });
 
