@@ -33,7 +33,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/solicitudes-servicio/{id}/cancelar', [SolicitudServicioController::class, 'cancelar'])
         ->name('solicitudes-servicio.cancelar');
 
-    Route::get('/perfil', [PerfilController::class, 'edit'])->name('perfil.edit');
+    Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil.show');
 
     Route::patch('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
 });
