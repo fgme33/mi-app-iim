@@ -6,6 +6,7 @@ use App\Http\Controllers\SolicitudCompraController;
 use App\Http\Controllers\SolicitudServicioController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PublicacionController;
 
 Route::get('/', function () {
     return redirect()->route('solicitudes-compra.index');
@@ -36,5 +37,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil.show');
 
     Route::patch('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
+
+    Route::post('/publicaciones', [PublicacionController::class, 'store'])->name('publicaciones.store');
+    Route::delete('/publicaciones/{id}', [PublicacionController::class, 'destroy'])->name('publicaciones.destroy');
 });
 

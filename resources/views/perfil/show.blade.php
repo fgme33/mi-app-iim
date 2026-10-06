@@ -56,13 +56,89 @@
                         <dt class="col-sm-4 text-muted">SNI</dt>
                         <dd class="col-sm-8">{{ $user->sni ?? '—' }}</dd>
 
-                        <dt class="col-sm-4 text-muted">DOI</dt>
-                        <dd class="col-sm-8">{{ $user->doi ?? '—' }}</dd>
-                    </dl>
+                     </dl>
                 </div>
             </div>
         </div>
     </div>
+<div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+    <h5 class="mb-0 text-gray-800">Últimas publicaciones</h5>
+    <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarPublicacion">
+        <i class="bi bi-plus-circle me-1"></i> Agregar publicación
+    </button>
+</div>
+
+@php
+    $publicacionesPorAnio = $user->publicaciones->groupBy('anio');
+@endphp
+
+@if($publicacionesPorAnio->isEmpty())
+    <p class="text-muted small">Aún no has agregado publicaciones.</p>
+@else
+    <div class="accordion" id="accordionPublicaciones">
+        @foreach($publicacionesPorAnio as $anio => $publicaciones)
+            <div class="accordion-item border-0 shadow-sm mb-2 rounded">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold text-primary bg-white rounded"
+                            type="button" data-bs-toggle="collapse"
+                            data-bs-target="#anio-{{ $anio }}">
+                        {{ $anio }}
+                    </button>
+                </h2>
+                <div id="anio-{{ $anio }}" class="accordion-collapse collapse" data-bs-parent="#accordionPublicaciones">
+                    <div class="accordion-body pt-2">
+                        <ul class="list-group list-group-flush">
+                            @foreach($publicaciones as $publicacion)
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <a href="https://doi.org/{{ $publicacion->doi }}" target="_blank" class="text-decoration-none">
+                                        {{ $publicacion->doi }}
+                                    </a>
+                                    <form action="{{ route('publicaciones.destroy', $publicacion->id) }}" method="POST"
+                                          onsubmit="return confirm('¿Eliminar esta publicación?');" class="ms-2">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+@endif
+
+<!-- Modal: Agregar publicación -->
+<div class="modal fade" id="modalAgregarPublicacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('publicaciones.store') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar publicación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">DOI</label>
+                        <input type="text" name="doi" class="form-control" placeholder="10.1000/xyz123" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Año</label>
+                        <input type="number" name="anio" class="form-control" min="1900" max="{{ date('Y') + 1 }}" value="{{ date('Y') }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info text-white">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </div>
 
 <!-- Modal: Modificar datos -->
@@ -90,8 +166,7 @@
                             'orcid_id'  => ['label' => 'ORCID iD',    'type' => 'text',  'value' => $user->orcid_id],
                             'scopus_id' => ['label' => 'Scopus ID',   'type' => 'text',  'value' => $user->scopus_id],
                             'sni'       => ['label' => 'SNI',         'type' => 'text',  'value' => $user->sni],
-                            'doi'       => ['label' => 'DOI',         'type' => 'textarea', 'value' => $user->doi],
-                        ];
+                            ];
                     @endphp
 
                     @foreach($campos as $name => $campo)
@@ -131,7 +206,6 @@
     </div>
 </div>
 @endsection
-
 @push('scripts')
 <script>
     document.querySelectorAll('.campo-toggle').forEach(function (checkbox) {
@@ -160,6 +234,41 @@
             Swal.fire('Archivo muy grande', 'La imagen no debe pesar más de 2MB.', 'warning');
             e.target.value = '';
         }
+    });
+
+    // Confirmación antes de guardar los cambios del perfil
+    const formModificarDatos = document.querySelector('#modalModificarDatos form');
+
+    formModificarDatos.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const seleccionados = document.querySelectorAll('.campo-toggle:checked');
+
+        if (seleccionados.length === 0) {
+            Swal.fire('Nada que guardar', 'Marca al menos un dato que quieras modificar.', 'info');
+            return;
+        }
+
+        const nombresCampos = Array.from(seleccionados).map(function (checkbox) {
+            const label = checkbox.closest('.row').querySelector('label');
+            return label ? label.textContent.trim() : '';
+        }).filter(Boolean);
+
+        Swal.fire({
+            title: '¿Guardar cambios?',
+            html: 'Vas a modificar: <strong>' + nombresCampos.join(', ') + '</strong>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0dcaf0',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Seguir editando',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                formModificarDatos.submit();
+            }
+        });
     });
 </script>
 @endpush
