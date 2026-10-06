@@ -34,11 +34,12 @@
                                 <td><span class="fw-bold text-primary">{{ $solicitud->folio }}</span></td>
                                 <td>{{ $solicitud->usuario->name ?? 'N/A' }}</td>
                                 <td>
-				    <ul class="list-unstyled mb-0 small">
-				        @foreach($solicitud->detalles as $detalle)
-				            <li>{{ $detalle->articulo->nombre }} <span class="text-muted">×{{ $detalle->cantidad }}</span></li>
-				        @endforeach
-				    </ul>
+    					<button type="button" class="btn btn-sm btn-outline-primary btn-ver-detalle"
+				            data-bs-toggle="modal" data-bs-target="#modalDetalleArticulos"
+				            data-folio="{{ $solicitud->folio }}"
+				            data-articulos="{{ $solicitud->detalles->map(fn($d) => ['nombre' => $d->articulo->nombre, 'cantidad' => $d->cantidad])->toJson() }}">
+				        <i class="bi bi-list-ul me-1"></i> Ver detalle ({{ $solicitud->detalles->count() }})
+					    </button>
 				</td>
                                 <td>{{ $solicitud->email_notificacion }}</td>
                                 <td>{{ $solicitud->created_at->format('d/m/Y H:i') }}</td>
@@ -90,6 +91,23 @@
         </div>
     </div>
 </div>
+<!-- Modal: Detalle de artículos -->
+<div class="modal fade" id="modalDetalleArticulos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Artículos de la solicitud <span id="detalleFolio" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="detalleListaArticulos" class="list-group list-group-flush"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -111,5 +129,23 @@
             }
         });
     }
+
+    document.getElementById('modalDetalleArticulos').addEventListener('show.bs.modal', function (event) {
+    const boton = event.relatedTarget;
+    const folio = boton.getAttribute('data-folio');
+    const articulos = JSON.parse(boton.getAttribute('data-articulos'));
+
+    document.getElementById('detalleFolio').textContent = folio;
+
+    const lista = document.getElementById('detalleListaArticulos');
+    lista.innerHTML = '';
+
+    articulos.forEach(function (item) {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = '<span>' + item.nombre + '</span><span class="badge bg-secondary">×' + item.cantidad + '</span>';
+        lista.appendChild(li);
+    });
+    });
 </script>
 @endpush
