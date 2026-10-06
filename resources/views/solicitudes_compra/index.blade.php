@@ -33,7 +33,13 @@
                             <tr>
                                 <td><span class="fw-bold text-primary">{{ $solicitud->folio }}</span></td>
                                 <td>{{ $solicitud->usuario->name ?? 'N/A' }}</td>
-                                <td>{{ $solicitud->articulo_solicitado }}</td>
+                                <td>
+				    <ul class="list-unstyled mb-0 small">
+				        @foreach($solicitud->detalles as $detalle)
+				            <li>{{ $detalle->articulo->nombre }} <span class="text-muted">×{{ $detalle->cantidad }}</span></li>
+				        @endforeach
+				    </ul>
+				</td>
                                 <td>{{ $solicitud->email_notificacion }}</td>
                                 <td>{{ $solicitud->created_at->format('d/m/Y H:i') }}</td>
                                 <td>

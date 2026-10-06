@@ -24,5 +24,11 @@ class SolicitudCompra extends Model
     public function usuario()
     {
         return $this->belongsTo(User::class, 'user_id');
+    
     }
+
+    public function detalles()
+{
+    return $this->hasMany(DetalleSolicitudCompra::class, 'solicitud_compra_id');
+}
 }
